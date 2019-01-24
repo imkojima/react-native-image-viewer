@@ -306,7 +306,7 @@ export default class ImageViewer extends React.Component<Props, State> {
     }).start();
 
     const nextIndex = (this.state.currentShowIndex || 0) - 1;
-
+    this.loadImage(nextIndex);
     this.setState(
       {
         currentShowIndex: nextIndex
@@ -339,7 +339,7 @@ export default class ImageViewer extends React.Component<Props, State> {
     }).start();
 
     const nextIndex = (this.state.currentShowIndex || 0) + 1;
-
+    this.loadImage(nextIndex);
     this.setState(
       {
         currentShowIndex: nextIndex
@@ -483,19 +483,39 @@ export default class ImageViewer extends React.Component<Props, State> {
         </ImageZoom>
       );
 
+      let failImageWidth = this.props!.failImageSource!.width || screenWidth
+      let failImageHeight = this.props!.failImageSource!.height || screenHeight
+      // 如果宽大于屏幕宽度,整体缩放到宽度是屏幕宽度
+      if (failImageWidth > screenWidth) {
+        const widthPixel = screenWidth / failImageWidth;
+        failImageWidth *= widthPixel;
+        failImageHeight *= widthPixel;
+      }
+
+      // 如果此时高度还大于屏幕高度,整体缩放到高度是屏幕高度
+      if (failImageHeight > screenHeight) {
+        const HeightPixel = screenHeight / failImageHeight;
+        failImageWidth *= HeightPixel;
+        failImageHeight *= HeightPixel;
+      }
+
       switch (imageInfo.status) {
         case 'loading':
           return (
             <Wrapper
               key={index}
-              style={{
-                ...this.styles.modalContainer,
-                ...this.styles.loadingContainer
-              }}
-              imageWidth={screenWidth}
-              imageHeight={screenHeight}
+              style={this.styles.modalContainer}
+              imageWidth={this.props.failImageSource ? failImageWidth : screenWidth}
+              imageHeight={this.props.failImageSource ? failImageHeight : screenHeight}
             >
-              <View style={this.styles.loadingContainer}>{this!.props!.loadingRender!()}</View>
+              {this.props.failImageSource &&
+                this!.props!.renderImage!({
+                  source: this.props.failImageSource.url,
+                  style: {
+                    width: failImageWidth,
+                    height: failImageHeight
+                  }
+                })}
             </Wrapper>
           );
         case 'success':
@@ -556,17 +576,15 @@ export default class ImageViewer extends React.Component<Props, State> {
             <Wrapper
               key={index}
               style={this.styles.modalContainer}
-              imageWidth={this.props.failImageSource ? this.props.failImageSource.width : screenWidth}
-              imageHeight={this.props.failImageSource ? this.props.failImageSource.height : screenHeight}
+              imageWidth={this.props.failImageSource ? failImageWidth : screenWidth}
+              imageHeight={this.props.failImageSource ? failImageHeight : screenHeight}
             >
               {this.props.failImageSource &&
                 this!.props!.renderImage!({
-                  source: {
-                    uri: this.props.failImageSource.url
-                  },
+                  source: this.props.failImageSource.url,
                   style: {
-                    width: this.props.failImageSource.width,
-                    height: this.props.failImageSource.height
+                    width: failImageWidth,
+                    height: failImageHeight
                   }
                 })}
             </Wrapper>
